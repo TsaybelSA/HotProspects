@@ -24,11 +24,14 @@ struct ProspectsView: View {
 		NavigationView {
 			List {
 				ForEach(filteredProspects) { prospect in
-					VStack(alignment: .leading) {
-						Text(prospect.name)
-							.font(.headline)
-						Text(prospect.emailAdress)
-							.foregroundColor(.secondary)
+					HStack {
+						contactedMark(for: prospect)
+						VStack(alignment: .leading) {
+							Text(prospect.name)
+								.font(.headline)
+							Text(prospect.emailAdress)
+								.foregroundColor(.secondary)
+						}
 					}
 					.swipeActions {
 						if prospect.isContacted {
@@ -69,6 +72,17 @@ struct ProspectsView: View {
 			}
 		}
     }
+	
+	@ViewBuilder
+	func contactedMark(for prospect: Prospect) -> some View {
+		if prospect.isContacted && filter == .none {
+			Image(systemName: "checkmark.circle")
+				.foregroundColor(.green)
+		} else if !prospect.isContacted && filter == .none {
+			Image(systemName: "x.circle")
+				.foregroundColor(.red)
+		}
+	}
 	
 	var filteredProspects: [Prospect] {
 		switch filter {

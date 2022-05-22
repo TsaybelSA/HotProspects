@@ -17,22 +17,38 @@ class Prospect: Identifiable, Codable {
 class Prospects: ObservableObject {
 	@Published private(set) var people: [Prospect]
 	
-	let userDefaultsKey = "SavedData"
+//	let userDefaultsKey = "SavedData"
+	let savePath = FileManager.documentsDirectory.appendingPathComponent("SavedData")
 	
 	init() {
 		people = []
 		
-		if let data = UserDefaults.standard.data(forKey: userDefaultsKey) {
-			if let decoded = try? JSONDecoder().decode([Prospect].self, from: data) {
-				people = decoded
-			}
+		do {
+			let data = try Data(contentsOf: savePath)
+			let decoded = try JSONDecoder().decode([Prospect].self, from: data)
+			people = decoded
+		} catch {
+			print("Failed to load data from Documents Directory")
 		}
+		
+//		if let data = UserDefaults.standard.data(forKey: userDefaultsKey) {
+//			if let decoded = try? JSONDecoder().decode([Prospect].self, from: data) {
+//				people = decoded
+//			}
+//		}
 	}
 	
 	private func save() {
-		if let encoded = try? JSONEncoder().encode(people) {
-			UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
+		do {
+			let data = try JSONEncoder().encode(people)
+			try data.write(to: savePath, options: [.atomic])
+		} catch {
+			print("Failed to save data")
 		}
+		
+//		if let encoded = try? JSONEncoder().encode(people) {
+//			UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
+//		}
 	}
 	
 	func add(_ prospect: Prospect) {
