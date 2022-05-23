@@ -14,16 +14,22 @@ struct ProspectsView: View {
 		case none, contacted, uncontacted
 	}
 	
-	@EnvironmentObject var prospects: Prospects
+	enum SortType {
+		case name, recentlyAdded
+	}
 	
+	@EnvironmentObject var prospects: Prospects
 	let filter: FilterType
+	
+	@State private var sortedBy: SortType = .name
+	@State private var showingConfirmation = false
 	
 	@State private var isShowingScanner = false
 	
     var body: some View {
 		NavigationView {
 			List {
-				ForEach(filteredProspects) { prospect in
+				ForEach(sortedProspects) { prospect in
 					HStack {
 						contactedMark(for: prospect)
 						VStack(alignment: .leading) {
@@ -61,14 +67,35 @@ struct ProspectsView: View {
 			}
 			.navigationTitle(title)
 			.toolbar {
-				Button {
-					isShowingScanner = true
-				} label: {
-					Label("Scan", systemImage: "qrcode.viewfinder")
+				ToolbarItem(placement: .navigationBarLeading) {
+					Button {
+						showingConfirmation = true
+					} label: {
+						Label("Sorted by", systemImage: "line.3.horizontal.decrease.circle")
+					}
+				}
+				ToolbarItem(placement: .navigationBarTrailing) {
+					Button {
+						isShowingScanner = true
+					} label: {
+						Label("Scan", systemImage: "qrcode.viewfinder")
+					}
 				}
 			}
 			.sheet(isPresented: $isShowingScanner) {
 				CodeScannerView(codeTypes: [.qr], simulatedData: "Unknown\nwithsome@mail.com", completion: handleScan)
+			}
+			.confirmationDialog("Sort by", isPresented: $showingConfirmation, titleVisibility: .visible) {
+				Button {
+					sortedBy = .name
+				} label: {
+					Label("Name", systemImage: "abc")
+				}
+				Button {
+					sortedBy = .recentlyAdded
+				} label: {
+					Label("Time of adding", systemImage: "clock")
+				}
 			}
 		}
     }
@@ -81,6 +108,15 @@ struct ProspectsView: View {
 		} else if !prospect.isContacted && filter == .none {
 			Image(systemName: "x.circle")
 				.foregroundColor(.red)
+		}
+	}
+	
+	var sortedProspects: [Prospect] {
+		switch sortedBy {
+			case .name:
+				return filteredProspects.sorted(by: { $0.name < $1.name })
+			case .recentlyAdded:
+				return filteredProspects.reversed()
 		}
 	}
 	
